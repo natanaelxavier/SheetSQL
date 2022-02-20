@@ -15,6 +15,8 @@ namespace SheetSQL.Views
         SheetLibrary.SheetListEntities ListSheet;
         ImageList imageList;
         DataTable _tableSelected;
+
+        Dictionary<string, List<string>> _querySQL;
         #endregion
 
         #region Constructores
@@ -23,6 +25,10 @@ namespace SheetSQL.Views
             InitializeComponent();
             this.ListSheet = new SheetLibrary.SheetListEntities();
             this.imageList = new ImageList();
+            this._querySQL = new Dictionary<string, List<string>>();
+            this._querySQL.Add("SELECT", new List<string>());
+            this._querySQL.Add("FROM", new List<string>());
+            this._querySQL.Add("WHERE", new List<string>());
         }
         private void Home_Load(object sender, EventArgs e)
         {
@@ -86,29 +92,60 @@ namespace SheetSQL.Views
                 {
                     if (!string.IsNullOrWhiteSpace(Query))
                     {
-                        int pSelect = Query.IndexOf("SELECT") + "SELECT ".Length;
-                        int pFrom = Query.LastIndexOf(" FROM");
+                        string _select = "SELECT";
+                        string _from = "FROM";
+                        string _where = "WHERE";
 
-                        string columns = string.Empty;
-                        List<string> columnsLst = Query.Substring(pSelect, pFrom - pSelect).Split(',').ToList();
-                        if(columnsLst.Count > 0)
-                            columns = string.Join(",",columnsLst.ToArray()).Replace("\n","").Replace("\t","").TrimStart().TrimEnd();
-
-                        columns = columns == "*" ? "" : columns;
-
-                        pFrom = Query.IndexOf("FROM") + "FROM ".Length;
-                        int pWhere = Query.LastIndexOf(" WHERE");
-
-                        string tables = Query.Substring(pFrom, (pWhere == -1 ? Query.Length : pWhere) - pFrom);
-
-                        string wheres = string.Empty;
-                        if (Query.Contains("WHERE"))
+                        string _dado = string.Empty;
+                        int posSelect = Query.IndexOf(_select) + "SELECT ".Length;
+                        if (posSelect >= 0)
                         {
-                            pWhere = Query.IndexOf("WHERE") + "WHERE ".Length;
-                            wheres = Query.Substring(pWhere);
+                            int posFrom = Query.IndexOf(_from,posSelect);
+                            if(posFrom >= 0)
+                            {
+                                _dado = Query.Substring(posSelect,posFrom - posSelect);
+                                this._querySQL["SELECT"].Clear();
+                                this._querySQL["SELECT"].AddRange(_dado.Split(','));
+
+                                int posWhere = Query.IndexOf(_where, posFrom);
+                                if(posWhere >= 0)
+                                {
+                                    _dado = Query.Substring(posFrom + "FROM".Length,posWhere - (posFrom + "FROM".Length));
+                                    this._querySQL["FROM"].Clear();
+                                    this._querySQL["FROM"].AddRange(_dado.Split(','));
+
+                                    _dado = Query.Substring(posWhere + "WHERE".Length, Query.Length - (posWhere + "WHERE".Length));
+                                    this._querySQL["WHERE"].Clear();
+                                    this._querySQL["WHERE"].AddRange(_dado.Replace("AND",",").Split(','));
+                                }
+                                else
+                                {
+                                    _dado = Query.Substring(posFrom + "FROM".Length, Query.Length - (posFrom + "FROM".Length));
+                                    this._querySQL["FROM"].Clear();
+                                    this._querySQL["FROM"].AddRange(_dado.Split(','));
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("Nenhuma tabela selecionada.");
+                            }
                         }
 
-                        if(this._tableSelected != null)
+                        
+                        string queryFinaly = "SELECT ";
+                        queryFinaly += String.Join(",", this._querySQL["SELECT"]);
+                        queryFinaly += " FROM ";
+                        queryFinaly += String.Join(",", this._querySQL["FROM"]);
+                        if (this._querySQL["WHERE"].Count() > 0)
+                        {
+                            queryFinaly += " WHERE ";
+                            queryFinaly += String.Join(" AND ", this._querySQL["WHERE"]);
+                        }
+                        MessageBox.Show(queryFinaly);
+                        
+
+                        /*
+                        if (this._tableSelected != null)
                         {
                             DataView vw = this._tableSelected.DefaultView;
                             if (vw != null)
@@ -118,7 +155,7 @@ namespace SheetSQL.Views
                                 LoadGrid(_tb);
                             }
                         }
-
+                        */
                     }
                 }
             }
@@ -216,12 +253,19 @@ namespace SheetSQL.Views
                             string str = strLst[strLst.Length - 1];
                             if (!string.IsNullOrEmpty(str))
                             {
-                                str = str.ToUpper();
+                                //str = str.ToUpper();
+                                if(this.ListSheet.GetAllTabs(Convert.ToInt32(nodeDad.Name)).ToList().Exists(t => t.Trim() == str.Trim().Replace(".", "")))
+                                {
+                                    RichTextBox_AutoComplete.SetAutocompleteItems(this.ListSheet.Find(Convert.ToInt32(nodeDad.Name), str.Trim().Replace(".", "")).Columns);
+                                }
+
+                                /*
                                 switch (str)
                                 {
                                     case "SELECT":
                                     case "WHERE":
-                                        RichTextBox_AutoComplete.SetAutocompleteItems(this.ListSheet.Find(Convert.ToInt32(nodeDad.Name)).ListColumns);
+                                        var teste = this.ListSheet.Find(Convert.ToInt32(nodeDad.Name))
+                                        RichTextBox_AutoComplete.SetAutocompleteItems(this.ListSheet.Find(Convert.ToInt32(nodeDad.Name)).);
                                         break;
                                     case "FROM":
                                         RichTextBox_AutoComplete.SetAutocompleteItems(this.ListSheet.Find(Convert.ToInt32(nodeDad.Name)).ListTabs);
@@ -229,6 +273,7 @@ namespace SheetSQL.Views
                                     default:
                                         break;
                                 }
+                                */
                             }
                         }
                     }

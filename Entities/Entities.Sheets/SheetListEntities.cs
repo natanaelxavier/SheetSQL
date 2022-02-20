@@ -69,8 +69,35 @@ namespace Entities.Sheets
                 };
                 return item;
             }
-
+            /// <summary>
+            /// Find worksheet tabs
+            /// </summary>
+            /// <param name="IdDatabase">Id sheet</param>
+            /// <param name="tableName">Name tab</param>
+            /// <returns>Returns object SheetTab</returns>
+            public SheetTabsEntities Find(int IdDatabase, string tableName)
+            {
+                SheetTabsEntities item = null;
+                SheetEntities sheetEntities = Find(IdDatabase);
+                if (sheetEntities != null)
+                {
+                    item = sheetEntities.ListTabs.Find(t => t.Name == tableName);
+                }
+                return item;
+            }
             public List<SheetEntities> GetList() => _items.ToList();
+
+            public IEnumerable<string> GetAllTabs(int IdDatabase)
+            {
+                SheetEntities sheetEntitties = Find(IdDatabase);
+                if(sheetEntitties != null)
+                {
+                    foreach (SheetTabsEntities it in sheetEntitties.ListTabs)
+                        yield return it.Name;
+                }
+            }
+
+
 
             public void Clear()
             {

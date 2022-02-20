@@ -16,16 +16,14 @@ namespace Entities.Sheets
             private int _id;
             private string _name;
             private string _directory;
-            private List<string> _listColumns;
-            private List<string> _listTabs;
+            private List<SheetTabsEntities> _listTabs;
             private bool disposedValue;
 
-            public SheetEntities() 
-            { 
-                this.ListColumns = new List<string>();
-                this._listTabs = new List<string>();
+            public SheetEntities()
+            {
+                this._listTabs = new List<SheetTabsEntities>();
             }
-            public SheetEntities(int id,string name, string directory):this()
+            public SheetEntities(int id, string name, string directory) : this()
             {
                 _id = id;
                 _name = name;
@@ -35,8 +33,7 @@ namespace Entities.Sheets
             public int Id { get => _id; set => _id = value; }
             public string Name { get => _name; set => _name = value; }
             public string Directory { get => _directory; set => _directory = value; }
-            public List<string> ListTabs { get => _listTabs; set => _listTabs = value; }
-            public List<string> ListColumns { get => _listColumns; set => _listColumns = value; }
+            public List<SheetTabsEntities> ListTabs { get => _listTabs; set => _listTabs = value; }
 
             public override bool Equals(object obj)
             {
